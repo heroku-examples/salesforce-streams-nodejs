@@ -6,15 +6,24 @@
     "dev": "node server.js -p $PORT",
     "build": "next build",
     "heroku-postbuild": "next build",
-    "start": "node server.js -p $PORT"
+    "start": "node server.js -p $PORT",
+    "test": "`npm bin`/ava **/*-test.js"
   },
   "dependencies": {
+    "dotenv": "^6.2.0",
+    "episode-7": "^1.1.2",
     "express": "^4.16.4",
+    "jsforce": "^1.9.1",
+    "jsforce-connection": "^2.1.0",
     "next": "^7.0.2",
     "react": "^16.7.0",
-    "react-dom": "^16.7.0"
+    "react-dom": "^16.7.0",
+    "redis": "^2.8.0"
   },
   "engines": {
     "node": "10.x"
+  },
+  "devDependencies": {
+    "ava": "^1.2.0"
   }
 }

@@ -1,10 +1,14 @@
-const express = require('express');
-const next = require('next');
-const path = require('path');
-const url = require('url');
-const cluster = require('cluster');
-const numCPUs = require('os').cpus().length;
+const express  = require('express');
+const next     = require('next');
+const path     = require('path');
+const url      = require('url');
+const cluster  = require('cluster');
+const numCPUs  = require('os').cpus().length;
+const Episode7 = require('episode-7');
 
+const salesforceStreams = require('./lib/salesforce-streams');
+
+require('dotenv').config()
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
 
@@ -25,7 +29,13 @@ if (!dev && cluster.isMaster) {
   const nextApp = next({ dir: '.', dev });
   const nextHandler = nextApp.getRequestHandler();
 
-  nextApp.prepare()
+  console.log('-----> Initializing Node worker');
+
+  const messageCallback = data => {
+    console.error(`       👁‍🗨  Salesforce message ${JSON.stringify(data)}`);
+  };
+  Episode7.run(salesforceStreams, process.env, messageCallback)
+    .then(() => nextApp.prepare())
     .then(() => {
       const server = express();
 
@@ -72,5 +82,9 @@ if (!dev && cluster.isMaster) {
         if (err) throw err;
         console.log(`Listening on http://localhost:${port}`);
       });
+    })
+    .catch( err => {
+      console.error(err);
+      process.exit(1);
     });
 }
