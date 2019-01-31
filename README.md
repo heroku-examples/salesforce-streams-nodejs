@@ -1,14 +1,22 @@
 
 # Salesforce streams with Node.js
 
-## How to use
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+### Local development
 
 ```bash
-git clone https://github.com/mars/salesforce-streams
-cd salesforce-streams
+git clone https://github.com/mars/salesforce-streams-nodejs
+cd salesforce-streams-nodejs
 ```
 
-Install it and run:
+Copy the local dev environment variables template, and then open `.env` in your editor to set the Salesforce username & password+securitytoken values:
+
+```
+cp .env.sample .env
+```
+
+Install Node packages and run in dev mode:
 
 ```bash
 npm install
@@ -17,21 +25,10 @@ npm run dev
 
 Then, visit [http://localhost:3000/](http://localhost:3000/) in your web browser.
 
-Run tests with local Redis:
+Run tests:
 
 ```bash
-REDIS_URL=redis://localhost:6379 npm test
-```
-
-Deploy it to the cloud with [Heroku](https://www.heroku.com):
-
-⚠️ *Requires installing [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)*
-
-```bash
-heroku create
-git add .
-git commit -m 'Next.js app on Heroku'
-git push heroku master
+npm test
 ```
 
 ### Configure Authentication
@@ -75,3 +72,4 @@ Performed based on environment variables. Either of the following authentication
   * ensure to unset this after usage to prevent the stream from sticking
   * example: `REPLAY_ID=5678` (or `-2` for all possible events)
   * default: unset, receive all new events
+

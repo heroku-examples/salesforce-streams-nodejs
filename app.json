@@ -1,0 +1,38 @@
+{
+  "name": "Salesforce activity",
+  "description": "Feed of what's happening in an org",
+  "keywords": [
+    "salesforce",
+    "streaming",
+    "cdc",
+    "change data capture"
+  ],
+  "env": {
+    "SALESFORCE_USERNAME": {
+      "description": "Login to the Salesforce org to display its streaming updates"
+    },
+    "SALESFORCE_PASSWORD": {
+      "description": "Combined Salesforce user password & security token, without space between"
+    },
+    "OBSERVE_SALESFORCE_TOPIC_NAMES": {
+      "description": "Streaming topics to display, comma-separated (default is for Change Data Capture [CDC])",
+      "value": "/data/ChangeEvents"
+    },
+    "REPLAY_ID": {
+      "description": "Recall a specific checkpoint in the streams (default: `-2` for all possible events)",
+      "value": "-2",
+      "required": false
+    }
+  },
+  "image": "heroku/nodejs",
+  "addons": [
+    {
+      "plan": "heroku-redis"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
