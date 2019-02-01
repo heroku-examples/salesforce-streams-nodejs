@@ -1,3 +1,4 @@
+🚧🔬 **Work in progress. Not yet functional.**
 
 # Salesforce streams with Node.js
 
