@@ -24,6 +24,14 @@
       "required": false
     }
   },
+  "formation": {
+    "web": {
+      "quantity": 1
+    },
+    "stream_consumer": {
+      "quantity": 1
+    }
+  },
   "image": "heroku/nodejs",
   "addons": [
     {

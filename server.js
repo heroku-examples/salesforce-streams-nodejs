@@ -4,9 +4,6 @@ const path     = require('path');
 const url      = require('url');
 const cluster  = require('cluster');
 const numCPUs  = require('os').cpus().length;
-const Episode7 = require('episode-7');
-
-const salesforceStreams = require('./lib/salesforce-streams');
 
 require('dotenv').config()
 const dev = process.env.NODE_ENV !== 'production';
@@ -29,13 +26,9 @@ if (!dev && cluster.isMaster) {
   const nextApp = next({ dir: '.', dev });
   const nextHandler = nextApp.getRequestHandler();
 
-  console.log('-----> Initializing Node worker');
+  console.log('-----> Initializing server');
 
-  const messageCallback = data => {
-    console.error(`       👁‍🗨  Salesforce message ${JSON.stringify(data)}`);
-  };
-  Episode7.run(salesforceStreams, process.env, messageCallback)
-    .then(() => nextApp.prepare())
+  nextApp.prepare()
     .then(() => {
       const server = express();
 
