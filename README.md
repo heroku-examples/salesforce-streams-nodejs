@@ -1,7 +1,15 @@
 
 # Salesforce streams with Node.js
 
+**This example app displays a feed of changes happening within a Salesforce org.**
+
+🤐🚫🙅‍♀️ *Do not connect this app with a production Salesforce org without proper security review. This app receives potentially confidental data from the Salesforce org via Streaming API.*
+
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+This example app uses the Change Data Capture (CDC) stream, which must be enabled for each desired object in Salesforce Setup:
+
+![Navigate to Salesforce Setup, then Integrations, then Change Data Capture](doc/Salesforce-setup-CDC.png "Salesforce Setup: Change Data Capture")
 
 ### Local development
 
