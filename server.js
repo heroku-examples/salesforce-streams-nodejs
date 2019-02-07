@@ -40,13 +40,10 @@ if (!dev && cluster.isMaster) {
       }
       const redisClient = redis.createClient(REDIS_URL);
       redisClient.on("error", function (err) {
-        logger(`redis error: ${err.stack}`);
+        console.error(`redis error: ${err.stack}`);
         process.exit(1);
       });
       redisClient.subscribe('salesforce');
-      redisClient.on("message", function (channel, message) {
-        console.log(`       👾 front-end rx channel '${channel}' message '${message}'`);
-      });
 
       if (!dev) {
         // Enforce SSL & HSTS in production
@@ -67,6 +64,29 @@ if (!dev && cluster.isMaster) {
       server.use('/static', express.static(path.join(__dirname, 'static'), {
         maxAge: dev ? '0' : '365d'
       }));
+    
+      // Server-Sent Events handler to push messages to browser clients
+      server.get('/stream/messages', (req, res, next) => {
+        req.socket.setTimeout(0);
+        let messageCount = 0;
+
+        res.writeHead(200, {
+          'Cache-Control': 'no-cache',
+          'Content-Type': 'text/event-stream',
+          'Connection': 'keep-alive'
+        });
+        res.write('\n');
+
+        redisClient.on("message", function (channel, message) {
+          console.error(`       👾 front-end rx channel '${channel}' message '${message}'`);
+          messageCount++;
+
+          res.write(`event: ${channel}\n`);
+          res.write(`id: ${messageCount}\n`);
+          res.write(`data: ${message}\n`);
+          res.write('\n');
+        });
+      })
 
       // Default catch-all renders Next app
       server.get('*', (req, res) => {
