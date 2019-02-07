@@ -67,16 +67,6 @@ if (!dev && cluster.isMaster) {
       server.use('/static', express.static(path.join(__dirname, 'static'), {
         maxAge: dev ? '0' : '365d'
       }));
-    
-      // Example server-side routing
-      server.get('/a', (req, res) => {
-        return nextApp.render(req, res, '/b', req.query)
-      })
-
-      // Example server-side routing
-      server.get('/b', (req, res) => {
-        return nextApp.render(req, res, '/a', req.query)
-      })
 
       // Default catch-all renders Next app
       server.get('*', (req, res) => {
