@@ -4,6 +4,7 @@ const path     = require('path');
 const url      = require('url');
 const cluster  = require('cluster');
 const numCPUs  = require('os').cpus().length;
+const redis    = require('redis');
 
 require('dotenv').config()
 const dev = process.env.NODE_ENV !== 'production';
@@ -30,7 +31,22 @@ if (!dev && cluster.isMaster) {
 
   nextApp.prepare()
     .then(() => {
-      const server = express();
+      const server = express();      
+
+      // Setup Redis datastore to receive messages from Redis "salesforce" channel
+      const REDIS_URL = process.env.REDIS_URL;
+      if (REDIS_URL == null) {
+        throw new Error('Requires REDIS_URL env var.');
+      }
+      const redisClient = redis.createClient(REDIS_URL);
+      redisClient.on("error", function (err) {
+        logger(`redis error: ${err.stack}`);
+        process.exit(1);
+      });
+      redisClient.subscribe('salesforce');
+      redisClient.on("message", function (channel, message) {
+        console.log(`       👾 front-end rx channel '${channel}' message '${message}'`);
+      });
 
       if (!dev) {
         // Enforce SSL & HSTS in production
