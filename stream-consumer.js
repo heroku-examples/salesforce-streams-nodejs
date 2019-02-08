@@ -15,7 +15,7 @@ if (REDIS_URL == null) {
 }
 const redisClient = redis.createClient(REDIS_URL);
 redisClient.on("error", function (err) {
-  logger(`redis error: ${err.stack}`);
+  console.error(`redis error: ${err.stack}`);
   process.exit(1);
 });
 
