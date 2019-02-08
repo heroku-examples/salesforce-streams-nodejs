@@ -45,6 +45,7 @@ if (!dev && cluster.isMaster) {
       });
       redisStream.subscribe('salesforce');
 
+      // Setup Redis datastore to perform queries (separate from subscriber)
       const redisQuery = redis.createClient(REDIS_URL);
       redisQuery.on("error", function (err) {
         console.error(`redis query error: ${err.stack}`);
@@ -71,11 +72,13 @@ if (!dev && cluster.isMaster) {
         maxAge: dev ? '0' : '365d'
       }));
     
-      // Server-Sent Events handler to push messages to browser clients
+      // Server-Sent Events (SSE) handler to push messages to browser clients
+      // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
       server.get('/stream/messages', (req, res, next) => {
         req.socket.setTimeout(0);
         let messageCount = 0;
 
+        // Send SSE headers
         res.writeHead(200, {
           'Cache-Control': 'no-cache',
           'Content-Type': 'text/event-stream',
@@ -83,6 +86,7 @@ if (!dev && cluster.isMaster) {
         });
         res.write('\n');
 
+        // Send all recent messages buffered in Redis
         redisQuery.lrange('salesforce-recent', 0, -1, (err, response) => {
           if (err) throw err;
           response.reverse();
@@ -95,6 +99,7 @@ if (!dev && cluster.isMaster) {
           })
         });
 
+        // Send each new message as it arrives
         redisStream.on("message", function (channel, message) {
           messageCount++;
 

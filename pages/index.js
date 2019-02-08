@@ -9,9 +9,12 @@ class IndexPage extends React.Component {
   }
 
   componentDidMount() {
+    // Server-Sent Events (SSE) handler to receive messages
+    // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
     this.eventSource = new EventSource("/stream/messages");
     this.eventSource.addEventListener("salesforce", event => {
       var message = JSON.parse(event.data);
+      // Collect them newest-first
       this.state.messages.unshift(message);
       this.setState({
         messages: this.state.messages
