@@ -4,7 +4,8 @@ class IndexPage extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      messages: []
+      messageIds: new Set(),
+      messages: {}
     };
   }
 
@@ -13,10 +14,14 @@ class IndexPage extends React.Component {
     // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
     this.eventSource = new EventSource("/stream/messages");
     this.eventSource.addEventListener("salesforce", event => {
-      var message = JSON.parse(event.data);
+      const message = JSON.parse(event.data);
+      const [header, content] = getMessageParts(message);
+      const id      = header.transactionKey || 'none';
       // Collect them newest-first
-      this.state.messages.unshift(message);
+      this.state.messageIds.add(id);
+      this.state.messages[id] = message;
       this.setState({
+        messageIds: this.state.messageIds,
         messages: this.state.messages
       });
     }, false);
@@ -29,9 +34,9 @@ class IndexPage extends React.Component {
   render() {
     return (
       <ul>
-        {this.state.messages.map( m => {
-          const content = m.payload || {};
-          const header  = content.ChangeEventHeader || {};
+        {[...this.state.messageIds].reverse().map( id => {
+          const message = this.state.messages[id];
+          const [header, content] = getMessageParts(message);
           return <li key={header.transactionKey}>
             {header.entityName || '(Nameless)'} {' / '}
             {header.changeType || '(Typeless)'} {' / '}
@@ -41,6 +46,12 @@ class IndexPage extends React.Component {
       </ul>
     )
   }
+}
+
+function getMessageParts(message) {
+  const content = message.payload || {};
+  const header  = content.ChangeEventHeader || {};
+  return [header, content];
 }
 
 export default IndexPage;
