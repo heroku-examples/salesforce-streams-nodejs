@@ -17,11 +17,6 @@
     "OBSERVE_SALESFORCE_TOPIC_NAMES": {
       "description": "Streaming topics to display, comma-separated (default is for Change Data Capture [CDC])",
       "value": "/data/ChangeEvents"
-    },
-    "REPLAY_ID": {
-      "description": "Recall a specific checkpoint in the streams (default: `-2` for all possible events)",
-      "value": "-2",
-      "required": false
     }
   },
   "formation": {
