@@ -38,12 +38,18 @@ if (!dev && cluster.isMaster) {
       if (REDIS_URL == null) {
         throw new Error('Requires REDIS_URL env var.');
       }
-      const redisClient = redis.createClient(REDIS_URL);
-      redisClient.on("error", function (err) {
-        console.error(`redis error: ${err.stack}`);
+      const redisStream = redis.createClient(REDIS_URL);
+      redisStream.on("error", function (err) {
+        console.error(`redis stream error: ${err.stack}`);
         process.exit(1);
       });
-      redisClient.subscribe('salesforce');
+      redisStream.subscribe('salesforce');
+
+      const redisQuery = redis.createClient(REDIS_URL);
+      redisQuery.on("error", function (err) {
+        console.error(`redis query error: ${err.stack}`);
+        process.exit(1);
+      });
 
       if (!dev) {
         // Enforce SSL & HSTS in production
@@ -77,8 +83,19 @@ if (!dev && cluster.isMaster) {
         });
         res.write('\n');
 
-        redisClient.on("message", function (channel, message) {
-          console.error(`       👾 front-end rx channel '${channel}' message '${message}'`);
+        redisQuery.lrange('salesforce-recent', 0, -1, (err, response) => {
+          if (err) throw err;
+          response.reverse();
+          response.forEach( message => {
+            messageCount++;
+            res.write(`event: salesforce\n`);
+            res.write(`id: ${messageCount}\n`);
+            res.write(`data: ${message}\n`);
+            res.write('\n');
+          })
+        });
+
+        redisStream.on("message", function (channel, message) {
           messageCount++;
 
           res.write(`event: ${channel}\n`);

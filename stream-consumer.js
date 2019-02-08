@@ -19,11 +19,15 @@ redisClient.on("error", function (err) {
   process.exit(1);
 });
 
-// Publish each incoming message to Redis "salesforce" channel
+// For each incoming message:
 const messageCallback = message => {
   const data = JSON.stringify(message);
   console.error(`       👁‍🗨  Salesforce message ${data}`);
+  // publish it to Redis "salesforce" channel
   redisClient.publish('salesforce', data);
+  // add it to the limited-length Redis "salesforce-recent" list
+  redisClient.lpush('salesforce-recent', data);
+  redisClient.ltrim('salesforce-recent', 0, 99);
 };
 
 // Subscribe to Salesforce Streaming API topics (OBSERVE_SALESFORCE_TOPIC_NAMES)
