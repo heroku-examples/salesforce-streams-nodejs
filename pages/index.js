@@ -10,31 +10,18 @@ class IndexPage extends React.Component {
   }
 
   componentDidMount() {
-    // Server-Sent Events (SSE) handler to receive messages
-    // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
-    this.eventSource = new EventSource("/stream/messages");
-    this.eventSource.addEventListener("salesforce", event => {
-      const message = JSON.parse(event.data);
-      const [header, content] = getMessageParts(message);
-      const id      = header.transactionKey || 'none';
-      // Collect them newest-first
-      this.state.messageIds.add(id);
-      this.state.messages[id] = message;
-      this.setState({
-        messageIds: this.state.messageIds,
-        messages: this.state.messages
-      });
-    }, false);
+    this.subscribeToSalesforceMessages();
   }
 
   componentWillUnmount() {
-    this.eventSource.close();
+    this.unsubscribeFromSalesforceMessages();
   }
 
   render() {
+    const decendingMessageIds = [...this.state.messageIds].reverse();
     return (
       <ul>
-        {[...this.state.messageIds].reverse().map( id => {
+        {decendingMessageIds.map( id => {
           const message = this.state.messages[id];
           const [header, content] = getMessageParts(message);
           return <li key={header.transactionKey}>
@@ -45,6 +32,29 @@ class IndexPage extends React.Component {
         })}
       </ul>
     )
+  }
+
+  subscribeToSalesforceMessages = () => {
+    // Server-Sent Events (SSE) handler to receive messages
+    // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
+    this.eventSource = new EventSource("/stream/messages");
+    this.eventSource.addEventListener("salesforce", event => {
+      const message = JSON.parse(event.data);
+      const [header, content] = getMessageParts(message);
+      const id = header.transactionKey || 'none';
+      // Collect message IDs into a Set to dedupe
+      this.state.messageIds.add(id);
+      // Collect message contents by ID
+      this.state.messages[id] = message;
+      this.setState({
+        messageIds: this.state.messageIds,
+        messages: this.state.messages
+      });
+    }, false);
+  }
+
+  unsubscribeFromSalesforceMessages = () => {
+    this.eventSource.close();
   }
 }
 
