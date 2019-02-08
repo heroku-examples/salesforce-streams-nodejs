@@ -103,7 +103,12 @@ if (!dev && cluster.isMaster) {
           res.write(`data: ${message}\n`);
           res.write('\n');
         });
-      })
+
+        // Send a byte of data every 50-seconds to keep 
+        // the Heroku router connection alive
+        const heartbeatID = setInterval(() => res.write('\n'), 50000);
+        req.socket.on("close", () => clearInterval(heartbeatID));
+      });
 
       // Default catch-all renders Next app
       server.get('*', (req, res) => {
