@@ -76,6 +76,7 @@ if (!dev && cluster.isMaster) {
       // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
       server.get('/stream/messages', (req, res, next) => {
         req.socket.setTimeout(0);
+        const idPrefix = req.headers['x-request-id'] || 'message';
         let messageCount = 0;
 
         // Send SSE headers
@@ -93,7 +94,7 @@ if (!dev && cluster.isMaster) {
           response.forEach( message => {
             messageCount++;
             res.write(`event: salesforce\n`);
-            res.write(`id: ${messageCount}\n`);
+            res.write(`id: ${idPrefix}-${messageCount}\n`);
             res.write(`data: ${message}\n`);
             res.write('\n');
           })
@@ -102,9 +103,8 @@ if (!dev && cluster.isMaster) {
         // Send each new message as it arrives
         redisStream.on("message", function (channel, message) {
           messageCount++;
-
           res.write(`event: ${channel}\n`);
-          res.write(`id: ${messageCount}\n`);
+          res.write(`id: ${idPrefix}-${messageCount}\n`);
           res.write(`data: ${message}\n`);
           res.write('\n');
         });
