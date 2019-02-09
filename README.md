@@ -12,7 +12,7 @@
 
 This app is composed of two processes: a single-process [Stream Consumer](stream-consumer.js) and a [scalable Web app](server.js).
 
-![Diagram: reactive apps with Salesforce streaming](doc/salesforce-streams-nodejs-v01.png)
+![Diagram: reactive apps with Salesforce streaming](doc/salesforce-streams-nodejs-v02.png)
 
 Messages flow from Salesforce to the Stream Consumer via [Bayeux/CometD](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/BayeauxProtocolAndCometD.htm#!), and then pushed through [Redis pub/sub](https://redis.io/topics/pubsub) to each individual Web client via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
 
