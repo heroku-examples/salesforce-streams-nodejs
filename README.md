@@ -8,6 +8,16 @@
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
+## Architecture
+
+This app is composed of two processes: a single-process [Stream Consumer](stream-consumer.js) and a [scalable Web app](server.js).
+
+![Diagram: reactive apps with Salesforce streaming](doc/salesforce-streams-nodejs-v01.png)
+
+Messages flow from Salesforce to the Stream Consumer via [Bayeux/CometD](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/BayeauxProtocolAndCometD.htm#!), and then pushed through [Redis pub/sub](https://redis.io/topics/pubsub) to each individual Web client via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
+
+The Stream Consumer is a single, single-threaded process to reliably ingest the ordered stream from Salesforce. Redis acts as a bridge to support scalable processing of the messages by multiple clients. In this example, we use Redis [`PUBLISH`/`SUBSCRIBE`](https://redis.io/topics/pubsub) to send every web client the complete stream. To instead provide a reliable queue of messages for scalable processing, pub/sub could be replaced with Redis [`LPUSH`/`RPOPLPUSH`/`LREM`](https://redis.io/commands/rpoplpush#pattern-reliable-queue).
+
 This example app uses the Change Data Capture (CDC) stream, which must be enabled for each desired object in Salesforce Setup:
 
 ![Navigate to Salesforce Setup, then Integrations, then Change Data Capture](doc/Salesforce-setup-CDC.png "Salesforce Setup: Change Data Capture")
