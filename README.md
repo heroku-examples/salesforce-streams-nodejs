@@ -18,7 +18,7 @@ Messages flow from Salesforce to the Stream Consumer via [Bayeux/CometD](https:/
 
 The Stream Consumer is a single, single-threaded process to reliably ingest the ordered stream from Salesforce. Redis acts as a bridge to support scalable processing of the messages by multiple clients. In this example, we use Redis [`PUBLISH`/`SUBSCRIBE`](https://redis.io/topics/pubsub) to send every web client the complete stream. To instead provide a reliable queue of messages for scalable processing, pub/sub could be replaced with Redis [`LPUSH`/`RPOPLPUSH`/`LREM`](https://redis.io/commands/rpoplpush#pattern-reliable-queue).
 
-This example app uses the Change Data Capture (CDC) stream, which must be enabled for each desired object in Salesforce Setup:
+This example app uses the [Change Data Capture (CDC)](https://developer.salesforce.com/docs/atlas.en-us.216.0.change_data_capture.meta/change_data_capture/cdc_intro.htm) stream for **Accounts**, which must be enabled for each desired object in Salesforce Setup:
 
 ![Navigate to Salesforce Setup, then Integrations, then Change Data Capture](doc/Salesforce-setup-CDC.png "Salesforce Setup: Change Data Capture")
 
@@ -58,6 +58,14 @@ cp .env.sample .env
 
 ✏️ *In `.env` [configure Salesforce authentication](#user-content-salesforce-authentication).*
 
+### Salesforce
+
+Login to the Salesforce org.
+
+In **Salesforce Setup** → **Integrations** → **Change Data Capture**, select which entities (objects) should produce change messages.
+
+For this example app, **Account** is selected.
+
 ### Running
 
 The app is composed of two processes, declared in the [`Procfile`](Procfile). It may be start using the follow commands:
@@ -77,17 +85,35 @@ npm run build
 NODE_ENV=production heroku local
 ```
 
-🏁 Then, visit [http://localhost:3000/](http://localhost:3000/) in your web browser.
+### Demo
 
-Run tests:
+▶️ in a browser view the web UI [http://localhost:3000/](http://localhost:3000/).
+
+▶️ in a separate browser window, login to the associated Salesforce org. Create or update entities that have been [configured](#user-content-salesforce).
+
+👀 observe the changes appearing in the web UI.
+
+### Testing
+
+Tested with [ava](https://github.com/avajs/ava):
 
 ```bash
 npm test
 ```
 
+## Configuration
+
+Configured via environment variables.
+
+For local development, set these values in `.env` file.
+
+For Heroku deployment, set these values via [Config Vars](https://devcenter.heroku.com/articles/config-vars).
+
 ### Salesforce Authentication
 
-Performed based on environment variables. Either of the following authentication methods may be used:
+**required**
+
+Any one of the following authentication methods must be used by setting its variables:
 
 * Username + password
   * `SALESFORCE_USERNAME`
@@ -102,7 +128,7 @@ Performed based on environment variables. Either of the following authentication
     * *Must include oAuth client ID, secret, & refresh token*
     * Example: `force://{client-id}:{secret}:{refresh-token}@{instance-name}.salesforce.com`
 
-### Configure Runtime Behavior
+### Runtime Behavior
 
 * `FORCE_API_VERSION`
   * Salesforce API version
