@@ -15,9 +15,9 @@
     "express": "^4.16.4",
     "jsforce": "^1.9.1",
     "jsforce-connection": "^2.1.0",
-    "next": "^7.0.2",
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0",
+    "next": "^8.0.1",
+    "react": "^16.8.1",
+    "react-dom": "^16.8.1",
     "redis": "^2.8.0"
   },
   "engines": {
