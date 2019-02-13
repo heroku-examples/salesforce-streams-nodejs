@@ -32,6 +32,9 @@ const messageCallback = (message, salesforceApi) => {
       // add it to the limited-length Redis "salesforce-recent" list
       redisClient.lpush('salesforce-recent', data);
       redisClient.ltrim('salesforce-recent', 0, 99);
+    })
+    .catch( err => {
+      console.error(`Salesforce streams message callback error: ${err.stack}`);
     });
 };
 
