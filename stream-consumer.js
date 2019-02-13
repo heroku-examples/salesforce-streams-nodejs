@@ -1,5 +1,6 @@
 const Episode7 = require('episode-7');
 const redis = require('redis');
+const {promisify} = require('util');
 
 const salesforceStreams = require('./lib/salesforce-streams');
 const fetchSalesforceDetails = require('./lib/fetch-salesforce-details');
@@ -14,7 +15,8 @@ const REDIS_URL = process.env.REDIS_URL;
 if (REDIS_URL == null) {
   throw new Error('Requires REDIS_URL env var.');
 }
-const redisClient = redis.createClient(REDIS_URL);
+const redisClient  = redis.createClient(REDIS_URL);
+const publishAsync = promisify(redisClient.publish).bind(redisClient);
 redisClient.on("error", function (err) {
   logger(`redis stream error: ${err.stack}`);
   process.exit(1);
@@ -22,16 +24,19 @@ redisClient.on("error", function (err) {
 
 // For each incoming message:
 const messageCallback = (message, salesforceApi) => {
+  const redisMulti = redisClient.multi();
+  const execMultiAsync = promisify(redisMulti.exec).bind(redisMulti);
   // Populate more details of the message (like User name & Account name)
   return fetchSalesforceDetails(message, salesforceApi)
     .then( decoratedMessage => {
       const data = JSON.stringify(decoratedMessage);
       console.error(`       👁‍🗨  Salesforce message ${data}`);
       // publish it to Redis "salesforce" channel
-      redisClient.publish('salesforce', data);
+      redisMulti.publish('salesforce', data);
       // add it to the limited-length Redis "salesforce-recent" list
-      redisClient.lpush('salesforce-recent', data);
-      redisClient.ltrim('salesforce-recent', 0, 99);
+      redisMulti.lpush('salesforce-recent', data);
+      redisMulti.ltrim('salesforce-recent', 0, 99);
+      return execMultiAsync();
     })
     .catch( err => {
       console.error(`Salesforce streams message callback error: ${err.stack}`);
