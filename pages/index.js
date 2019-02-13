@@ -23,11 +23,17 @@ class IndexPage extends React.Component {
       <ul>
         {decendingMessageIds.map( id => {
           const message = this.state.messages[id];
-          const [header, content] = getMessageParts(message);
-          return <li key={header.transactionKey}>
-            {header.entityName || '(Nameless)'} {' / '}
-            {header.changeType || '(Typeless)'} {' / '}
-            {content.LastModifiedDate || '(Dateless)'}
+          const [header, content, context] = getMessageParts(message);
+          return <li
+            key={header.transactionKey}
+            style={header.changeType === 'GAP_UPDATE' ? { display: 'none'} : {}}>
+            <p>
+              {(header.changeType || '(Typeless)').toLowerCase()} {' '}
+              <strong>{context[`${header.entityName}Name`] || (Nameless)}</strong> {' '}
+              {(header.entityName || '(nameless)').toLowerCase()}
+              <br/>
+              by {context.UserName || '(No commit user)'} at {content.LastModifiedDate || '(Dateless)'}
+            </p>
           </li>;
         })}
       </ul>
@@ -40,7 +46,7 @@ class IndexPage extends React.Component {
     this.eventSource = new EventSource("/stream/messages");
     this.eventSource.addEventListener("salesforce", event => {
       const message = JSON.parse(event.data);
-      const [header, content] = getMessageParts(message);
+      const [header] = getMessageParts(message);
       const id = header.transactionKey || 'none';
       // Collect message IDs into a Set to dedupe
       this.state.messageIds.add(id);
@@ -60,8 +66,9 @@ class IndexPage extends React.Component {
 
 function getMessageParts(message) {
   const content = message.payload || {};
+  const context = message.context || {};
   const header  = content.ChangeEventHeader || {};
-  return [header, content];
+  return [header, content, context];
 }
 
 export default IndexPage;
