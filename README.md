@@ -1,5 +1,3 @@
-🚧🔬 **Work in progress. Not yet functional.**
-
 # Salesforce streams with Node.js
 
 **This example app displays a feed of changes happening within a Salesforce org.**
