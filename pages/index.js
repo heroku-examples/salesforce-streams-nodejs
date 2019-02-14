@@ -91,52 +91,59 @@ class IndexPage extends React.Component {
   }
 
   subscribeToSalesforceMessages = () => {
-    // Server-Sent Events (SSE) handler to receive messages
-    // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
-    this.eventSource = new EventSource("/stream/messages");
+    const connect = () => {
+      // Server-Sent Events (SSE) handler to receive messages
+      // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
+      this.eventSource = new EventSource("/stream/messages");
+      // Drive "App is on-line" indicator from heartbeat events.
+      // `heartbeating` will become false if a heartbeat is not 
+      // received within 10-sec period.
+      let lastBeat;
+      this.eventSource.addEventListener("heartbeat", event => {
+        if (lastBeat) clearTimeout(lastBeat);
+        this.setState({ heartbeating: true });
+        lastBeat = setTimeout(() => {
+          this.setState({ heartbeating: false });
+        }, 10000);
+      }, false);
 
-    // Drive "App is on-line" indicator from heartbeat events.
-    // `heartbeating` will become false if a heartbeat is not 
-    // received within 10-sec period.
-    let lastBeat;
-    this.eventSource.addEventListener("heartbeat", event => {
-      if (lastBeat) clearTimeout(lastBeat);
-      this.setState({ heartbeating: true });
-      lastBeat = setTimeout(() => {
-        this.setState({ heartbeating: false });
-      }, 10000);
-    }, false);
+      // Drive "Salesforce Streaming API is on-line" indicator
+      // and description from status events.
+      this.eventSource.addEventListener("status", event => {
+        const status = JSON.parse(event.data);
+        this.setState({
+          status: {
+            salesforceStreamingConnectionReason: null,
+            ...status
+          }
+        });
+      }, false);
 
-    // Drive "Salesforce Streaming API is on-line" indicator
-    // and description from status events.
-    this.eventSource.addEventListener("status", event => {
-      const status = JSON.parse(event.data);
-      this.setState({
-        status: {
-          salesforceStreamingConnectionReason: null,
-          ...status
-        }
-      });
-    }, false);
+      // Receive Salesforce change events as they occur.
+      this.eventSource.addEventListener("salesforce", event => {
+        const message = JSON.parse(event.data);
+        const [header] = getMessageParts(message);
+        const id = header.transactionKey || 'none';
+        // Collect message IDs into a Set to dedupe
+        this.state.messageIds.add(id);
+        // Collect message contents by ID
+        this.state.messages[id] = message;
+        this.setState({
+          messageIds: this.state.messageIds,
+          messages: this.state.messages
+        });
+      }, false);
 
-    // Receive Salesforce change events as they occur.
-    this.eventSource.addEventListener("salesforce", event => {
-      const message = JSON.parse(event.data);
-      const [header] = getMessageParts(message);
-      const id = header.transactionKey || 'none';
-      // Collect message IDs into a Set to dedupe
-      this.state.messageIds.add(id);
-      // Collect message contents by ID
-      this.state.messages[id] = message;
-      this.setState({
-        messageIds: this.state.messageIds,
-        messages: this.state.messages
-      });
-    }, false);
+      this.eventSource.addEventListener("error", err => {
+        console.error('EventSource error', err);
+        this.eventSource.close();
+        setTimeout(() => {
+          connect();
+        }, 5000);
+      }, false);
+    }
 
-    this.eventSource.addEventListener("error", err => {
-      console.error('EventSource error', err);
-    }, false);
+    connect();
   }
 
   unsubscribeFromSalesforceMessages = () => {
