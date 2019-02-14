@@ -1,4 +1,5 @@
 import React from 'react'
+import classNames from 'classnames';
 
 class IndexPage extends React.Component {
   constructor(props) {
@@ -6,7 +7,8 @@ class IndexPage extends React.Component {
     this.state = {
       messageIds: new Set(),
       messages: {},
-      status: {}
+      status: {},
+      heartbeat: false
     };
   }
 
@@ -20,9 +22,32 @@ class IndexPage extends React.Component {
 
   render() {
     const decendingMessageIds = [...this.state.messageIds].reverse();
+    const connectionIsUp = this.state.status.salesforceStreamingConnectionIsUp;
+    const connectionReason = this.state.status.salesforceStreamingConnectionReason;
     return (
       <div>
-        <p>{this.state.status.salesforceStreamingConnectionIsUp ? '✅' : '❌'} Salesforce connection</p>
+        <p>
+
+        <span className={classNames({
+          "heart": true,
+          "heartbeat": this.state.heartbeat
+        })}>{'💗'}</span>
+        <style jsx>{`
+          .heart {
+            opacity: 0.1;
+            transition: opacity 2.5s ease-out;
+          }
+          .heartbeat {
+            opacity: 1;
+            transition: opacity 2.5s ease-in;
+          }
+        `}</style>
+
+        {connectionIsUp ?
+          '✅' :
+          `❌ ${connectionReason}`}
+
+        </p>
         <ul>
           {decendingMessageIds.map( id => {
             const message = this.state.messages[id];
@@ -48,10 +73,19 @@ class IndexPage extends React.Component {
     // Server-Sent Events (SSE) handler to receive messages
     // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
     this.eventSource = new EventSource("/stream/messages");
+
+    this.eventSource.addEventListener("heartbeat", event => {
+      this.setState({ heartbeat: true });
+      setTimeout(() => {
+        this.setState({ heartbeat: false });
+      }, 2500);
+    }, false);
+
     this.eventSource.addEventListener("status", event => {
       const status = JSON.parse(event.data);
       this.setState({ status });
     }, false);
+
     this.eventSource.addEventListener("salesforce", event => {
       const message = JSON.parse(event.data);
       const [header] = getMessageParts(message);

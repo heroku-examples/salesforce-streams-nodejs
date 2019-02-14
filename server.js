@@ -43,7 +43,7 @@ if (!dev && cluster.isMaster) {
         console.error(`redis stream error: ${err.stack}`);
         process.exit(1);
       });
-      redisStream.subscribe('status', 'salesforce');
+      redisStream.subscribe('heartbeat', 'status', 'salesforce');
 
       // Setup Redis datastore to perform queries (separate from subscriber)
       const redisQuery = redis.createClient(REDIS_URL);
