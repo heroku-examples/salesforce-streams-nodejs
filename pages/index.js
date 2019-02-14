@@ -8,7 +8,7 @@ class IndexPage extends React.Component {
       messageIds: new Set(),
       messages: {},
       status: {},
-      heartbeat: false
+      heartbeating: false
     };
   }
 
@@ -22,18 +22,25 @@ class IndexPage extends React.Component {
 
   render() {
     const decendingMessageIds = [...this.state.messageIds].reverse();
-    const connectionIsUp = this.state.status.salesforceStreamingConnectionIsUp;
-    const connectionReason = this.state.status.salesforceStreamingConnectionReason;
+
+    const heartbeating = this.state.heartbeating;
+    const heartbeatReason = heartbeating ? 'App is on-line' : 'App is off-line';
+    const salesforceStreamIsUp = this.state.status.salesforceStreamingConnectionIsUp;
+    const salesforceStreamReason = this.state.status.salesforceStreamingConnectionReason;
+    const salesforceReason = heartbeating ? salesforceStreamReason : heartbeatReason;
+    
     return (
       <div>
         <p>
 
         <span className={classNames({
           "heart": true,
-          "heartbeat": this.state.heartbeat
-        })}>{'💗'}</span>
+          "heartbeat": heartbeating
+          })}
+          title={heartbeatReason}>{'💗'}</span>
         <style jsx>{`
           .heart {
+            font-size: 2rem;
             opacity: 0.1;
             transition: opacity 2.5s ease-out;
           }
@@ -43,9 +50,23 @@ class IndexPage extends React.Component {
           }
         `}</style>
 
-        {connectionIsUp ?
-          '✅' :
-          `❌ ${connectionReason}`}
+        <span className={classNames({
+          "salesforce-stream": true,
+          "salesforce-stream-online": heartbeating && salesforceStreamIsUp
+          })}
+          title={salesforceReason}>{'☁️'}
+        </span>
+        <style jsx>{`
+          .salesforce-stream {
+            font-size: 2rem;
+            opacity: 0.1;
+            transition: opacity 2.5s ease-out;
+          }
+          .salesforce-stream-online {
+            opacity: 1;
+            transition: opacity 2.5s ease-in;
+          }
+        `}</style>
 
         </p>
         <ul>
@@ -74,18 +95,31 @@ class IndexPage extends React.Component {
     // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
     this.eventSource = new EventSource("/stream/messages");
 
+    // Drive "App is on-line" indicator from heartbeat events.
+    // `heartbeating` will become false if a heartbeat is not 
+    // received within 10-sec period.
+    let lastBeat;
     this.eventSource.addEventListener("heartbeat", event => {
-      this.setState({ heartbeat: true });
-      setTimeout(() => {
-        this.setState({ heartbeat: false });
-      }, 2500);
+      if (lastBeat) clearTimeout(lastBeat);
+      this.setState({ heartbeating: true });
+      lastBeat = setTimeout(() => {
+        this.setState({ heartbeating: false });
+      }, 10000);
     }, false);
 
+    // Drive "Salesforce Streaming API is on-line" indicator
+    // and description from status events.
     this.eventSource.addEventListener("status", event => {
       const status = JSON.parse(event.data);
-      this.setState({ status });
+      this.setState({
+        status: {
+          salesforceStreamingConnectionReason: null,
+          ...status
+        }
+      });
     }, false);
 
+    // Receive Salesforce change events as they occur.
     this.eventSource.addEventListener("salesforce", event => {
       const message = JSON.parse(event.data);
       const [header] = getMessageParts(message);

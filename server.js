@@ -9,6 +9,7 @@ const redis    = require('redis');
 require('dotenv').config()
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
+const heartbeatSecs = 5;
 
 // Multi-process to utilize all CPU cores.
 if (!dev && cluster.isMaster) {
@@ -51,6 +52,11 @@ if (!dev && cluster.isMaster) {
         console.error(`redis query error: ${err.stack}`);
         process.exit(1);
       });
+
+      redisQuery.publish('heartbeat', '💗');
+      setInterval(() => {
+        redisQuery.publish('heartbeat', '💗');
+      }, heartbeatSecs * 1000);
 
       if (!dev) {
         // Enforce SSL & HSTS in production
