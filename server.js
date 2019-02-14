@@ -6,13 +6,22 @@ const cluster  = require('cluster');
 const numCPUs  = require('os').cpus().length;
 const redis    = require('redis');
 
+const redisHeartbeat = require('./lib/redis-heartbeat');
+
 require('dotenv').config()
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
+const REDIS_URL = process.env.REDIS_URL;
+if (REDIS_URL == null) {
+  throw new Error('Requires REDIS_URL env var.');
+}
 const heartbeatSecs = 5;
 
 // Multi-process to utilize all CPU cores.
 if (!dev && cluster.isMaster) {
+  // In production, heartbeat in the master process.
+  redisHeartbeat(REDIS_URL, heartbeatSecs);
+  
   console.log(`Node cluster master ${process.pid} is running`);
 
   // Fork workers.
@@ -32,13 +41,26 @@ if (!dev && cluster.isMaster) {
 
   nextApp.prepare()
     .then(() => {
-      const server = express();      
+      const server = express();
 
-      // Setup Redis datastore to receive messages from Redis "salesforce" channel
-      const REDIS_URL = process.env.REDIS_URL;
-      if (REDIS_URL == null) {
-        throw new Error('Requires REDIS_URL env var.');
+      if (dev) {
+        // In dev, heartbeat in the single process.
+        redisHeartbeat(REDIS_URL, heartbeatSecs);
+      } else {
+        // Enforce SSL & HSTS in production
+        server.use(function(req, res, next) {
+          var proto = req.headers["x-forwarded-proto"];
+          if (proto === "https") {
+            res.set({
+              'Strict-Transport-Security': 'max-age=31557600' // one-year
+            });
+            return next();
+          }
+          res.redirect("https://" + req.headers.host + req.url);
+        });
       }
+
+      // Setup Redis datastore to receive messages
       const redisStream = redis.createClient(REDIS_URL);
       redisStream.on("error", function (err) {
         console.error(`redis stream error: ${err.stack}`);
@@ -52,25 +74,6 @@ if (!dev && cluster.isMaster) {
         console.error(`redis query error: ${err.stack}`);
         process.exit(1);
       });
-
-      redisQuery.publish('heartbeat', '💗');
-      setInterval(() => {
-        redisQuery.publish('heartbeat', '💗');
-      }, heartbeatSecs * 1000);
-
-      if (!dev) {
-        // Enforce SSL & HSTS in production
-        server.use(function(req, res, next) {
-          var proto = req.headers["x-forwarded-proto"];
-          if (proto === "https") {
-            res.set({
-              'Strict-Transport-Security': 'max-age=31557600' // one-year
-            });
-            return next();
-          }
-          res.redirect("https://" + req.headers.host + req.url);
-        });
-      }
       
       // Static files
       // https://github.com/zeit/next.js/tree/4.2.3#user-content-static-file-serving-eg-images
