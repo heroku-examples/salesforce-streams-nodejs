@@ -28,7 +28,7 @@ class IndexPage extends React.Component {
     const salesforceStreamIsUp = this.state.status.salesforceStreamingConnectionIsUp;
     const salesforceStreamReason = this.state.status.salesforceStreamingConnectionReason;
     const salesforceReason = heartbeating ? salesforceStreamReason : heartbeatReason;
-    
+
     return (
       <div>
         <p>
@@ -132,6 +132,10 @@ class IndexPage extends React.Component {
         messageIds: this.state.messageIds,
         messages: this.state.messages
       });
+    }, false);
+
+    this.eventSource.addEventListener("error", err => {
+      console.error('EventSource error', err);
     }, false);
   }
 
