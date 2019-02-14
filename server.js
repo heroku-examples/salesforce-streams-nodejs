@@ -43,7 +43,7 @@ if (!dev && cluster.isMaster) {
         console.error(`redis stream error: ${err.stack}`);
         process.exit(1);
       });
-      redisStream.subscribe('salesforce');
+      redisStream.subscribe('status', 'salesforce');
 
       // Setup Redis datastore to perform queries (separate from subscriber)
       const redisQuery = redis.createClient(REDIS_URL);
@@ -86,6 +86,16 @@ if (!dev && cluster.isMaster) {
           'Connection': 'keep-alive'
         });
         res.write('\n');
+
+        // Send all status info buffered in Redis
+        redisQuery.get('status-recent', (err, response) => {
+          if (err) throw err;
+          messageCount++;
+          res.write(`event: status\n`);
+          res.write(`id: ${idPrefix}-${messageCount}\n`);
+          res.write(`data: ${response}\n`);
+          res.write('\n');
+        });
 
         // Send all recent messages buffered in Redis
         redisQuery.lrange('salesforce-recent', 0, -1, (err, response) => {
