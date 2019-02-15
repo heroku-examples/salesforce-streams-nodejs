@@ -44,7 +44,7 @@ This example app uses the [Change Data Capture (CDC)](https://developer.salesfor
 In your shell terminal, clone this repo to become the working directory:
 
 ```bash
-git clone https://github.com/mars/salesforce-streams-nodejs
+git clone https://github.com/heroku-examples/salesforce-streams-nodejs
 cd salesforce-streams-nodejs
 ```
 
