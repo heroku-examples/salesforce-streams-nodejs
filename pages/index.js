@@ -136,7 +136,7 @@ class IndexPage extends React.Component {
           }
           .heartbeat {
             opacity: 1;
-            transition: opacity 2.5s ease-in;
+            transition: opacity .5s ease-in;
           }
 
           .salesforce-stream {
@@ -146,7 +146,7 @@ class IndexPage extends React.Component {
           }
           .salesforce-stream-online {
             opacity: 1;
-            transition: opacity 2.5s ease-in;
+            transition: opacity .5s ease-in;
           }
         `}</style>
       </div>
