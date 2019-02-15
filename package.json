@@ -17,8 +17,9 @@
     "jsforce": "^1.9.1",
     "jsforce-connection": "^2.1.0",
     "next": "^8.0.1",
-    "react": "^16.8.1",
-    "react-dom": "^16.8.1",
+    "react": "^16.8.2",
+    "react-addons-css-transition-group": "^15.6.2",
+    "react-dom": "^16.8.2",
     "redis": "^2.8.0"
   },
   "engines": {
