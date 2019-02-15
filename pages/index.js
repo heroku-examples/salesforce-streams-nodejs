@@ -3,6 +3,10 @@ import Head from 'next/head';
 import classNames from 'classnames';
 import CSSTransitionGroup from 'react-addons-css-transition-group';
 
+import TimeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
+TimeAgo.addLocale(en);
+
 class IndexPage extends React.Component {
   constructor(props) {
     super(props);
@@ -12,6 +16,7 @@ class IndexPage extends React.Component {
       status: {},
       heartbeating: false
     };
+    this.timeAgo = new TimeAgo('en-US');
   }
 
   componentDidMount() {
@@ -73,7 +78,10 @@ class IndexPage extends React.Component {
                   <strong>{context[`${header.entityName}Name`] || (Nameless)}</strong> {' '}
                   {(header.entityName || '(nameless)').toLowerCase()}
                   <br/>
-                  by {context.UserName || '(No commit user)'} at {content.LastModifiedDate || '(Dateless)'}
+                  by {context.UserName || '(No commit user)'}{', '} 
+                    <span title={content.LastModifiedDate}>
+                      {this.timeAgo.format(Date.parse(content.LastModifiedDate)) || '(Dateless)'}
+                    </span>
                 </p>
               </li>;
             })}

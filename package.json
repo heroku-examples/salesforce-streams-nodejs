@@ -14,6 +14,7 @@
     "dotenv": "^6.2.0",
     "episode-7": "^1.1.2",
     "express": "^4.16.4",
+    "javascript-time-ago": "^2.0.1",
     "jsforce": "^1.9.1",
     "jsforce-connection": "^2.1.0",
     "next": "^8.0.1",
