@@ -6,6 +6,8 @@
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
+![Screenshot of the web interface](doc/salesforce-activity-ui-v01.png)
+
 ## Architecture
 
 This app is composed of two server-side processes and a web UI:
