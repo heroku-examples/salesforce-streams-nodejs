@@ -18,9 +18,9 @@ This app is composed of two server-side processes and a web UI:
 
 ![Diagram: reactive apps with Salesforce streaming](doc/salesforce-streams-nodejs-v03.png)
 
-Messages flow from Salesforce to the Stream Consumer via [Bayeux/CometD](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/BayeauxProtocolAndCometD.htm#!), and then pushed through [Redis pub/sub](https://redis.io/topics/pubsub) to each individual Web client via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
+Messages [flow](lib/subscribe-salesforce-streams.js#L108) from Salesforce into the stream consumer via [Bayeux/CometD](https://developer.salesforce.com/docs/atlas.en-us.api_streaming.meta/api_streaming/BayeauxProtocolAndCometD.htm#!), and then are [pushed](stream-consumer.js#L35) into [Redis pub/sub](https://redis.io/topics/pubsub) so [requests](https://github.com/heroku-examples/salesforce-streams-nodejs/blob/master/server.js#L86) from each independent web client may [subscribe](pages/index.js#L156) to them via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events).
 
-The Stream Consumer is a single, single-threaded process to reliably ingest the ordered stream from Salesforce. Redis acts as a bridge to support scalable processing of the messages by multiple clients. In this example, we use Redis [`PUBLISH`/`SUBSCRIBE`](https://redis.io/topics/pubsub) to send every web client the complete stream. To instead provide a reliable queue of messages for scalable processing, pub/sub could be replaced with Redis [`LPUSH`/`RPOPLPUSH`/`LREM`](https://redis.io/commands/rpoplpush#pattern-reliable-queue).
+The stream consumer is a single, single-threaded process to reliably ingest the ordered stream from Salesforce. Redis acts as a bridge to support scalable processing of the messages by multiple clients. In this example, we use Redis [`PUBLISH`/`SUBSCRIBE`](https://redis.io/topics/pubsub) to send every web client the complete stream. To instead provide a reliable queue of messages for scalable processing, pub/sub could be replaced with Redis [`LPUSH`/`RPOPLPUSH`/`LREM`](https://redis.io/commands/rpoplpush#pattern-reliable-queue).
 
 This example app uses the [Change Data Capture (CDC)](https://developer.salesforce.com/docs/atlas.en-us.216.0.change_data_capture.meta/change_data_capture/cdc_intro.htm) stream for **Accounts**, which must be enabled for each desired object in Salesforce Setup:
 
@@ -93,9 +93,11 @@ NODE_ENV=production heroku local
 
 ▶️ in a browser view the web UI [http://localhost:3000/](http://localhost:3000/).
 
-▶️ in a separate browser window, login to the associated Salesforce org. Create or update entities that have been [configured](#user-content-salesforce).
+▶️ in a separate browser window, login to the associated Salesforce org. Create or update entities (example: Accounts) that are [configured](#user-content-salesforce) for CDC events.
 
 👀 observe the changes appearing in the web UI.
+
+⚡️☁ notice the bolt & cloud emojis in the web UI. The ⚡️ indicates the web browser's on-line status, while the ☁️ indicates the backend Salesforce streaming connection status. These indicators fade out when off-line. Hover over them to see a textual description of the current state.
 
 ### Testing
 
